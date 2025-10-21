@@ -34,7 +34,7 @@ st.set_page_config(
 
 # Sidebar: logo and haKCer Academy section
 st.sidebar.image("assets/sts.png", width='stretch')
-st.sidebar.divider()
+
 with st.sidebar.expander("haKCer Academy", expanded=True):
     st.image("assets/hackeracademy.png", width='stretch')
     st.markdown(
@@ -45,7 +45,7 @@ with st.sidebar.expander("haKCer Academy", expanded=True):
         unsafe_allow_html=False,
     )
 
-
+st.sidebar.divider()
 @st.cache_data(show_spinner=False)
 def get_prompt_text() -> str:
     with open("prompts/auditor_system_prompt.txt", "r", encoding="utf-8") as f:
@@ -166,28 +166,6 @@ def main():
     if "meta" not in st.session_state:
         st.session_state.meta = {}
 
-    # === Sidebar: Config first so variables exist ===
-    with st.sidebar.expander("SLOP STOP Config", expanded=True):
-        rules_file = st.text_input("Rules file", value="rules/rules.example.json")
-        frictions_file = st.text_input("Friction policies", value="rules/friction_policies.example.json")
-        max_chars = st.number_input("Max chars", min_value=10000, max_value=1000000,
-                                    value=cfg.max_chars, step=5000)
-        use_selenium = st.checkbox("Enable headless Selenium", value=cfg.enable_selenium)
-        block_private = st.checkbox("Block private IPs for URLs", value=cfg.block_private_ips)
-
-        provider_opts = []
-        if cfg.openai_key:
-            provider_opts.append("openai")
-        if cfg.anthropic_key:
-            provider_opts.append("anthropic")
-        if cfg.google_key:
-            provider_opts.append("gemini")
-        providers = st.multiselect("LLM providers", provider_opts, default=provider_opts)
-        model_map = {
-            "openai": st.text_input("OpenAI model", value=cfg.default_models["openai"]),
-            "anthropic": st.text_input("Anthropic model", value=cfg.default_models["anthropic"]),
-            "gemini": st.text_input("Gemini model", value=cfg.default_models["gemini"]),
-        }
 
     # === Sidebar: Input expander ===
     st.sidebar.divider()
@@ -265,26 +243,34 @@ def main():
 
     # === Sidebar: Top lists ===
     st.sidebar.divider()
-    with st.sidebar.expander("Top slop observations", expanded=False):
-        top_rules = _top_counts(df_logs["rules_hit"] if total_runs else None, topn=10)
-        st.write("No data yet" if top_rules.empty else st.dataframe(top_rules, width='stretch', hide_index=True))
+        # === Sidebar: Config first so variables exist ===
+    with st.sidebar.expander("SLOP STOP Config", expanded=False):
+        rules_file = st.text_input("Rules file", value="rules/rules.example.json")
+        frictions_file = st.text_input("Friction policies", value="rules/friction_policies.example.json")
+        max_chars = st.number_input("Max chars", min_value=10000, max_value=1000000,
+                                    value=cfg.max_chars, step=5000)
+        use_selenium = st.checkbox("Enable headless Selenium", value=cfg.enable_selenium)
+        block_private = st.checkbox("Block private IPs for URLs", value=cfg.block_private_ips)
 
-    with st.sidebar.expander("Top friction points", expanded=False):
-        top_fric = _top_counts(df_logs["frictions"] if total_runs else None, topn=10)
-        st.write("No data yet" if top_fric.empty else st.dataframe(top_fric, width='stretch', hide_index=True))
+        provider_opts = []
+        if cfg.openai_key:
+            provider_opts.append("openai")
+        if cfg.anthropic_key:
+            provider_opts.append("anthropic")
+        if cfg.google_key:
+            provider_opts.append("gemini")
+        providers = st.multiselect("LLM providers", provider_opts, default=provider_opts)
+        model_map = {
+            "openai": st.text_input("OpenAI model", value=cfg.default_models["openai"]),
+            "anthropic": st.text_input("Anthropic model", value=cfg.default_models["anthropic"]),
+            "gemini": st.text_input("Gemini model", value=cfg.default_models["gemini"]),
+        }
 
-    # === Sidebar: Log viewer ===
+
     st.sidebar.divider()
-    with st.sidebar.expander("Run log", expanded=False):
-        if total_runs:
-            show = df_logs[["run_id", "ts", "source", "combined_score",
-                            "decision_slop", "confidence", "rules_hit", "frictions"]]
-            st.dataframe(show, width='stretch', hide_index=True)
-        else:
-            st.write("No runs yet")
 
     # === MAIN AREA ===
-    with st.expander("Visuals", expanded=False):
+    with st.sidebar.expander("Visuals", expanded=False):
         if total_runs:
             fig1 = px.line(df_logs, x="ts", y="combined_score", markers=True,
                            title="Combined score over time",
@@ -308,7 +294,24 @@ def main():
             st.plotly_chart(fig3, use_container_width=True)
         else:
             st.info("Run at least one analysis to populate charts")
+    st.sidebar.divider()
 
+    with st.sidebar.expander("Top slop observations", expanded=False):
+        top_rules = _top_counts(df_logs["rules_hit"] if total_runs else None, topn=10)
+        st.write("No data yet" if top_rules.empty else st.dataframe(top_rules, width='stretch', hide_index=True))
+
+    with st.sidebar.expander("Top friction points", expanded=False):
+        top_fric = _top_counts(df_logs["frictions"] if total_runs else None, topn=10)
+        st.write("No data yet" if top_fric.empty else st.dataframe(top_fric, width='stretch', hide_index=True))
+
+    # === Sidebar: Log viewer ===
+    with st.sidebar.expander("Run log", expanded=False):
+        if total_runs:
+            show = df_logs[["run_id", "ts", "source", "combined_score",
+                            "decision_slop", "confidence", "rules_hit", "frictions"]]
+            st.dataframe(show, width='stretch', hide_index=True)
+        else:
+            st.write("No runs yet")
     # === MAIN AREA: Run analysis ===
     with st.expander("Run analysis", expanded=True):
         if st.session_state.content:
