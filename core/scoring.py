@@ -14,11 +14,6 @@ def _summarize_hits_local(local_findings: List[Dict[str, Any]]) -> List[str]:
     return reasons
 
 def _llm_evidence_score_and_reasons(llm_results: List[Dict[str, Any]]) -> Tuple[float, float, List[str]]:
-    """
-    LLM contributes a continuous signal from its own rule hits only.
-    Score part: mean over models of confidence * mean(severity of hit=true findings).
-    Reasons: only those rule_findings where hit=true, rendered as concise strings.
-    """
     if not llm_results:
         return 0.0, 0.5, []
 
@@ -39,20 +34,19 @@ def _llm_evidence_score_and_reasons(llm_results: List[Dict[str, Any]]) -> Tuple[
                 reason = f.get("reason") or ""
                 reasons.append(f"[llm:{rid}] {reason}")
         else:
-            # No hits means no reasons and no score contribution, even if the model wrote an overall_reason
             scores.append(0.0)
 
-    score = sum(scores) / len(scores) if scores else 0.0
-    avg_conf = sum(confs) / len(confs) if confs else 0.5
+    score = (sum(scores) / len(scores)) if scores else 0.0
+    avg_conf = (sum(confs) / len(confs)) if confs else 0.5
     return _clamp(score), _clamp(avg_conf), reasons
 
 def aggregate_score(local_score: float,
-                    local_findings: List[Dict[str, Any]],
                     llm_results: List[Dict[str, Any]],
-                    weights: Dict[str, float]) -> Dict[str, Any]:
+                    weights: Dict[str, float],
+                    local_findings: List[Dict[str, Any]] | None = None) -> Dict[str, Any]:
     """
     Final combined score = rules_weight * local_score + llm_weight * llm_evidence_score.
-    Reasons = union of local hit reasons and llm hit reasons only.
+    Reasons = union of local hit reasons (if provided) and llm hit reasons only.
     Confidence = llm confidence lightly boosted to reflect mixed-method.
     """
     rw = float(weights.get("rules_weight", 0.55))
@@ -60,9 +54,13 @@ def aggregate_score(local_score: float,
 
     llm_score, llm_conf, llm_reasons = _llm_evidence_score_and_reasons(llm_results)
     combined = _clamp(rw * _clamp(local_score) + lw * _clamp(llm_score))
-    reasons = _summarize_hits_local(local_findings) + llm_reasons
-    confidence = _clamp(llm_conf + 0.2)
 
+    reasons: List[str] = []
+    if local_findings:
+        reasons.extend(_summarize_hits_local(local_findings))
+    reasons.extend(llm_reasons)
+
+    confidence = _clamp(llm_conf + 0.2)
     return {"combined_score": combined, "reasons": reasons, "confidence": confidence}
 
 def final_decision(combined_score: float, threshold: float) -> bool:
