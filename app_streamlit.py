@@ -373,13 +373,7 @@ def main():
                                        file_name="slopwatch_report.md",
                                        mime="text/markdown")
             with info_col:
-                st.markdown(
-                    """
-                    **Tip**  
-                    You can tweak providers and models from the sidebar.  
-                    The preview shows the first 2000 characters after normalization.
-                    """
-                )
+                st.caption("Preview shows the first 2000 characters after normalization.")
         else:
             st.info("No content loaded yet. Use the sidebar to provide a URL, file, or pasted text, then come back here to run the analysis.")
 
