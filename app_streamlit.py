@@ -204,16 +204,45 @@ def main():
     rule_hit_count = int(df_logs["rules_hit"].explode().dropna().shape[0]) if total_runs else 0
 
     # SIDEBAR: Metrics row
+    # SIDEBAR: Compact statistics table with visual polish
     st.sidebar.divider()
     st.sidebar.subheader("Statistics")
-    col1, col2 = st.sidebar.columns(2)
-    with col1:
-        st.metric("Analyses", total_runs)
-        st.metric("Slop", slop_runs)
-        st.metric("Clean", not_slop)
-    with col2:
-        st.metric("Sources", uniq_sources)
-        st.metric("Rule hits", rule_hit_count)
+    
+    stats_data = {
+        "Analyses": total_runs,
+        "Slop": slop_runs,
+        "Clean": not_slop,
+        "Sources": uniq_sources,
+        "Rule hits": rule_hit_count,
+    }
+    
+    stats_df = pd.DataFrame(list(stats_data.items()), columns=["Metric", "Count"])
+    
+    def _row_style(row):
+        # Soft highlights for quick scanning
+        if row["Metric"] == "Slop":
+            return ["background-color: #ffe6e6; color: #770000"] * 2
+        if row["Metric"] == "Clean":
+            return ["background-color: #e6ffe6; color: #004d00"] * 2
+        return [""] * 2
+    
+    styled = (
+        stats_df.style
+        .apply(_row_style, axis=1)
+        .hide(axis="index")
+        .set_table_styles([
+            {"selector": "th", "props": [("text-align", "left"), ("font-size", "0.85rem"), ("font-weight", "600")]} ,
+            {"selector": "td", "props": [("font-size", "0.85rem"), ("padding", "0.2rem 0.4rem")]}
+        ])
+    )
+    
+    st.sidebar.dataframe(
+        styled,
+        use_container_width=True,
+        hide_index=True,
+        height=160
+    )
+
 
     # SIDEBAR: Top lists
     st.sidebar.divider()
