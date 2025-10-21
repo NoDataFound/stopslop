@@ -99,6 +99,15 @@
       "pattern": "\\b20(3\\d|[4-9]\\d)\\b"
     },
     {
+  "id": "vague-source",
+  "description": "Mentions a report or authority without a concrete citation or URL",
+  "weight": 1.6,
+  "type": "regex_any",
+  "negate": false,
+  "pattern": "\\b(report|experts?\\s+say|officials?\\s+stated|intelligence\\s+assessment)\\b(?![^\\n]{0,120}(https?://|CISA|NIST|CERT|MSRC|DNI|ODNI|FBI))"
+    },
+
+    {
       "id": "llm-only-claims",
       "description": "Sweeping claims lacking any reference or quantifier",
       "weight": 2.6,
