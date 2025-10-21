@@ -43,28 +43,25 @@ with st.sidebar.expander("haKCer Academy", expanded=True):
         unsafe_allow_html=False,
     )
 
-@st.cache_data(show_spinner=False)
-
 def normalize_to_url(raw: str) -> str:
     """Take any user input and return a valid http(s) URL string."""
     if not raw:
         return ""
     raw = raw.strip()
-    # If it's already a proper URL, return as-is
     if raw.lower().startswith(("http://", "https://")):
         return raw
-    # If it looks like a bare domain
     if "." in raw and " " not in raw:
         return "https://" + raw
-    # If user pasted something like 'example com' or 'www example com'
     cleaned = raw.replace(" ", "").replace("www.", "")
     if "." not in cleaned:
         cleaned += ".com"
     return "https://" + cleaned
 
+@st.cache_data(show_spinner=False)
 def get_prompt_text() -> str:
     with open("prompts/auditor_system_prompt.txt", "r", encoding="utf-8") as f:
         return f.read()
+
 
 
 def _annotate_reasons(reasons: list[str], local_findings: list[dict]) -> list[str]:
@@ -196,19 +193,24 @@ def main():
         if input_mode == "URL":
             url = st.text_input("Enter URL")
             if st.button("Fetch", use_container_width=True):
-                with st.spinner("Fetching"):
-                    safe_url = normalize_to_url(url)
-                    try:
-                        text, meta = fetch_url(
-                            safe_url,
-                            timeout_sec=cfg.timeout_sec,
-                            block_private_ips=st.session_state["block_private"],
-                            use_selenium=st.session_state["use_selenium"],
-                        )
-                        st.session_state.content = normalize_text(text, st.session_state["max_chars"])
-                        st.session_state.meta = meta
-                        st.success(f"Fetched {len(st.session_state.content)} chars from {safe_url}")
-                    except Exception as e:
+                safe_url = normalize_to_url(url)
+                if not safe_url:
+                    st.error("Please enter a URL or domain")
+                else:
+                    with st.spinner("Fetching"):
+                        try:
+                            text, meta = fetch_url(
+                                safe_url,
+                                timeout_sec=cfg.timeout_sec,
+                                block_private_ips=st.session_state["block_private"],
+                                use_selenium=st.session_state["use_selenium"],
+                            )
+                            st.session_state.content = normalize_text(text, st.session_state["max_chars"])
+                            st.session_state.meta = meta
+                            st.success(f"Fetched {len(st.session_state.content)} chars from {safe_url}")
+                        except Exception as e:
+                            st.error(f"Failed to fetch {safe_url}: {e}")
+
 
         elif input_mode == "File":
             f = st.file_uploader("Upload a file",
@@ -297,8 +299,6 @@ def main():
         st.session_state["block_private"] = bool(block_private)
         st.session_state["providers"] = providers
         st.session_state["model_map"] = model_map
-
-
 
 
     # === MAIN AREA ===
@@ -399,7 +399,6 @@ def main():
             st.info("No content loaded yet. Use the sidebar to provide a URL, file, or pasted text, then come back here to run the analysis.")
 
     components.html(SPOT_GUIDE_HTML, height=8000, scrolling=True)
-
 
 if __name__ == "__main__":
     main()
