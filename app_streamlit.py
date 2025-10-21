@@ -343,60 +343,76 @@ def main():
             st.dataframe(show, width='stretch', hide_index=True)
         else:
             st.write("No runs yet")
-    # === MAIN AREA: Run analysis ===
-    with st.expander("Run analysis", expanded=True):
+
+    with st.expander("Analysis", expanded=True):
         if st.session_state.content:
             st.success("Preview")
-            st.text_area("Normalized content sample",
-                         st.session_state.content[:2000],
-                         height=160, key="preview_area")
-            run_col, info_col = st.columns([5, 1], vertical_alignment="center")
-            with run_col:
-                if st.button("Run slop detection", width='stretch'):
-                 
-                    report = analyze(
-                        st.session_state.content,
-                        st.session_state.meta,
-                        st.session_state["rules_file"],
-                        st.session_state["frictions_file"],
-                        st.session_state.get("providers", []),
-                        st.session_state.get("model_map", {}),
-                        cfg,
-                    )
+            st.text_area(
+                "Normalized content sample",
+                st.session_state.content[:2000],
+                height=160,
+                key="preview_area",
+            )
 
-                    st.success("Decision")
-                    st.metric("Slop", str(report["decision_slop"]),
-                              delta=f"{report['combined_score']:.3f}")
-                    st.code(f"Confidence: {report['confidence']:.2f}")
+            if st.button("Run slop detection", width='stretch'):
 
-                    st.info("Reasons")
-                    annotated = _annotate_reasons(report.get("overall_reasons", []),
-                                                  report.get("rules_findings", []))
-                    for r in annotated:
-                        st.write(f"- {r}")
-                    st.caption("Notes: provider reasons marked with 'local rule did not hit' "
-                               "did not contribute to the score. 'rule not in local ruleset' "
-                               "means your provider referenced a rule your local engine does not evaluate.")
+                report = analyze(
+                    st.session_state.content,
+                    st.session_state.meta,
+                    st.session_state["rules_file"],
+                    st.session_state["frictions_file"],
+                    st.session_state.get("providers", []),
+                    st.session_state.get("model_map", {}),
+                    cfg,
+                )
 
-                    st.info("Rule findings")
-                    st.json(report["rules_findings"])
-                    st.info("LLM results (informational only)")
-                    st.json(report["llm_results"])
-                    st.subheader("Friction plan")
-                    st.json(report["friction"])
+                st.success("Decision")
+                st.metric(
+                    "Slop",
+                    str(report["decision_slop"]),
+                    delta=f"{report['combined_score']:.3f}",
+                )
+                st.code(f"Confidence: {report['confidence']:.2f}")
 
-                    j = json.dumps(report, indent=2)
-                    st.download_button("Download JSON report", data=j,
-                                       file_name="slopwatch_report.json",
-                                       mime="application/json")
-                    md = to_markdown(report)
-                    st.download_button("Download Markdown report", data=md,
-                                       file_name="slopwatch_report.md",
-                                       mime="text/markdown")
-            with info_col:
-                st.caption("Preview shows the first 2000 characters after normalization.")
+                st.info("Reasons")
+                annotated = _annotate_reasons(
+                    report.get("overall_reasons", []),
+                    report.get("rules_findings", []),
+                )
+                for r in annotated:
+                    st.write(f"- {r}")
+                st.caption(
+                    "Notes: provider reasons marked with 'local rule did not hit' "
+                    "did not contribute to the score. 'rule not in local ruleset' "
+                    "means your provider referenced a rule your local engine does not evaluate."
+                )
+
+                st.info("Rule findings")
+                st.json(report["rules_findings"])
+                st.info("LLM results (informational only)")
+                st.json(report["llm_results"])
+                st.subheader("Friction plan")
+                st.json(report["friction"])
+
+                j = json.dumps(report, indent=2)
+                st.download_button(
+                    "Download JSON report",
+                    data=j,
+                    file_name="slopwatch_report.json",
+                    mime="application/json",
+                )
+                md = to_markdown(report)
+                st.download_button(
+                    "Download Markdown report",
+                    data=md,
+                    file_name="slopwatch_report.md",
+                    mime="text/markdown",
+                )
         else:
-            st.info("No content loaded yet. Use the sidebar to provide a URL, file, or pasted text, then come back here to run the analysis.")
+            st.info(
+                "No content loaded yet. Use the sidebar to provide a URL, file, or pasted text, "
+                "then come back here to run the analysis."
+            )
 
     components.html(SPOT_GUIDE_HTML, height=8000, scrolling=True)
 
