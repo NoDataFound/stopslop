@@ -22,7 +22,6 @@ from core.report import build_report, to_markdown
 from core.friction import generate_friction
 from core.telemetry import append_log, read_logs
 
-# Import your HTML guide
 from spot_guide_with_logo import SPOT_GUIDE_HTML
 
 load_dotenv()
@@ -32,7 +31,6 @@ st.set_page_config(
     page_icon="assets/sts.png"
 )
 
-# Sidebar: logo and haKCer Academy section
 st.sidebar.image("assets/sts.png", width='stretch')
 
 with st.sidebar.expander("haKCer Academy", expanded=True):
@@ -159,6 +157,12 @@ def _top_counts(series, topn=10):
 
 def main():
     cfg = RuntimeConfig()
+    st.session_state.setdefault("rules_file", "rules/rules.example.json")
+    st.session_state.setdefault("frictions_file", "rules/friction_policies.example.json")
+    st.session_state.setdefault("max_chars", int(cfg.max_chars))
+    st.session_state.setdefault("use_selenium", bool(cfg.enable_selenium))
+    st.session_state.setdefault("block_private", bool(cfg.block_private_ips))
+
 
     if "content" not in st.session_state:
         st.session_state.content = ""
@@ -173,32 +177,35 @@ def main():
 
         if input_mode == "URL":
             url = st.text_input("Enter URL")
-            if st.button("Fetch", width='stretch'):
+            if st.button("Fetch", use_container_width=True):
                 with st.spinner("Fetching"):
-                    text, meta = fetch_url(url, timeout_sec=cfg.timeout_sec,
-                                           block_private_ips=block_private,
-                                           use_selenium=use_selenium)
-                    st.session_state.content = normalize_text(text, max_chars)
+                    text, meta = fetch_url(
+                        url,
+                        timeout_sec=cfg.timeout_sec,
+                        block_private_ips=st.session_state["block_private"],
+                        use_selenium=st.session_state["use_selenium"]
+                    )
+                    st.session_state.content = normalize_text(text, st.session_state["max_chars"])
                     st.session_state.meta = meta
                     st.success(f"Fetched {len(st.session_state.content)} chars")
 
         elif input_mode == "File":
             f = st.file_uploader("Upload a file",
                                  type=["pdf", "docx", "html", "htm", "md", "txt", "log", "ioc"])
-            if f is not None and st.button("Ingest File", width='stretch'):
+            if f is not None and st.button("Ingest File", use_container_width=True):
                 temp_path = f"uploaded_{int(time.time())}_{f.name}"
                 with open(temp_path, "wb") as out:
                     out.write(f.read())
                 text, meta = extract_text_from_file(temp_path)
                 os.remove(temp_path)
-                st.session_state.content = normalize_text(text, max_chars)
+                st.session_state.content = normalize_text(text, st.session_state["max_chars"])
                 st.session_state.meta = meta
                 st.success(f"Ingested {len(st.session_state.content)} chars")
 
         else:
             pasted = st.text_area("Paste text here")
-            if st.button("Use Pasted Text", width='stretch'):
-                st.session_state.content = normalize_text(pasted, max_chars)
+            if st.button("Use Pasted Text", use_container_width=True):
+                st.session_state.content = normalize_text(pasted, st.session_state["max_chars"])
                 st.session_state.meta = {"source": "pasted"}
                 st.success(f"Loaded {len(st.session_state.content)} chars from pasted input")
 
@@ -239,15 +246,13 @@ def main():
     )
     st.sidebar.dataframe(styled, width='stretch', hide_index=True, height=160)
 
-    # === Sidebar: Top lists ===
-        # === Sidebar: Config first so variables exist ===
     with st.sidebar.expander("SLOP STOP Config", expanded=False):
-        rules_file = st.text_input("Rules file", value="rules/rules.example.json")
-        frictions_file = st.text_input("Friction policies", value="rules/friction_policies.example.json")
+        rules_file = st.text_input("Rules file", value=st.session_state["rules_file"])
+        frictions_file = st.text_input("Friction policies", value=st.session_state["frictions_file"])
         max_chars = st.number_input("Max chars", min_value=10000, max_value=1000000,
-                                    value=cfg.max_chars, step=5000)
-        use_selenium = st.checkbox("Enable headless Selenium", value=cfg.enable_selenium)
-        block_private = st.checkbox("Block private IPs for URLs", value=cfg.block_private_ips)
+                                    value=int(st.session_state["max_chars"]), step=5000)
+        use_selenium = st.checkbox("Enable headless Selenium", value=st.session_state["use_selenium"])
+        block_private = st.checkbox("Block private IPs for URLs", value=st.session_state["block_private"])
 
         provider_opts = []
         if cfg.openai_key:
@@ -262,6 +267,16 @@ def main():
             "anthropic": st.text_input("Anthropic model", value=cfg.default_models["anthropic"]),
             "gemini": st.text_input("Gemini model", value=cfg.default_models["gemini"]),
         }
+
+        # Persist to session_state for downstream use
+        st.session_state["rules_file"] = rules_file
+        st.session_state["frictions_file"] = frictions_file
+        st.session_state["max_chars"] = int(max_chars)
+        st.session_state["use_selenium"] = bool(use_selenium)
+        st.session_state["block_private"] = bool(block_private)
+        st.session_state["providers"] = providers
+        st.session_state["model_map"] = model_map
+
 
 
 
@@ -317,8 +332,17 @@ def main():
             run_col, info_col = st.columns([1, 3], vertical_alignment="center")
             with run_col:
                 if st.button("Run slop detection", width='stretch'):
-                    report = analyze(st.session_state.content, st.session_state.meta,
-                                     rules_file, frictions_file, providers, model_map, cfg)
+                 
+                    report = analyze(
+                        st.session_state.content,
+                        st.session_state.meta,
+                        st.session_state["rules_file"],
+                        st.session_state["frictions_file"],
+                        st.session_state.get("providers", []),
+                        st.session_state.get("model_map", {}),
+                        cfg,
+                    )
+
                     st.success("Decision")
                     st.metric("Slop", str(report["decision_slop"]),
                               delta=f"{report['combined_score']:.3f}")
@@ -359,7 +383,6 @@ def main():
         else:
             st.info("No content loaded yet. Use the sidebar to provide a URL, file, or pasted text, then come back here to run the analysis.")
 
-    # === MAIN AREA: Spot the Slop guide ===
     components.html(SPOT_GUIDE_HTML, height=8000, scrolling=True)
 
 
