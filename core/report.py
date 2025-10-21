@@ -50,7 +50,11 @@ def to_markdown(report: dict) -> str:
     lines.append("")
     lines.append("## LLM results")
     for r in report["llm_results"]:
-        lines.append(f"- is_slop={r.get('is_slop')} confidence={r.get('confidence')} reason={r.get('overall_reason')}")
+        prov = r.get("_provider", "unknown")
+        conf = r.get("confidence")
+        reason = r.get("overall_reason")
+        lines.append(f"- provider={prov} confidence={conf} reason={reason}")
+
     lines.append("")
     lines.append("## Reasons")
     for reason in report["overall_reasons"]:
