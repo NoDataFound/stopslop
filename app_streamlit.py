@@ -380,7 +380,7 @@ def main():
                     report.get("rules_findings", []),
                 )
                 for r in annotated:
-                    st.code(f"- {r}")
+                    st.warning(f"- {r}")
                 st.caption(
                     "Notes: provider reasons marked with 'local rule did not hit' "
                     "did not contribute to the score. 'rule not in local ruleset' "
