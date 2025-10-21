@@ -391,7 +391,7 @@ def main():
                 st.json(report["rules_findings"])
                 st.info("LLM results (informational only)")
                 st.json(report["llm_results"])
-                st.subheader("Friction plan")
+                st.info("Friction plan")
                 st.json(report["friction"])
 
                 j = json.dumps(report, indent=2)
