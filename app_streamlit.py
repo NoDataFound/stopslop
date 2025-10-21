@@ -77,11 +77,11 @@ def _annotate_reasons(reasons: list[str], local_findings: list[dict]) -> list[st
         src, rid, rest = m.groups()
         if src == "llm":
             if rid in local_hits:
-                out.append(f"[llm:{rid}] {rest}")
+                out.append(f"[{rid}] {rest}")
             elif rid in local_rules:
-                out.append(f"[llm:{rid}] {rest}  (note: local rule did not hit)")
+                out.append(f"[{rid}] {rest}  (note: local rule did not hit)")
             else:
-                out.append(f"[llm:{rid}] {rest}  (note: rule not in local ruleset)")
+                out.append(f"[{rid}] {rest}  (note: rule not in local ruleset)")
         else:
             out.append(r)
     return out
@@ -97,7 +97,7 @@ def analyze(content: str, meta: dict, rules_path: str, frictions_path: str,
     system_prompt = get_prompt_text()
 
     for prov in providers:
-        with st.spinner(f"Querying {prov}"):
+        with st.spinner(f"Processing Content for Slop"):
             if prov == "openai" and cfg.openai_key:
                 p = OpenAIProvider(cfg.openai_key)
                 out = p.audit(content, findings, system_prompt, model_map["openai"], timeout=cfg.timeout_sec)
