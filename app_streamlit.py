@@ -325,11 +325,11 @@ def main():
     # === MAIN AREA: Run analysis ===
     with st.expander("Run analysis", expanded=True):
         if st.session_state.content:
-            st.subheader("Preview")
+            st.success("Preview")
             st.text_area("Normalized content sample",
                          st.session_state.content[:2000],
                          height=160, key="preview_area")
-            run_col, info_col = st.columns([1, 3], vertical_alignment="center")
+            run_col, info_col = st.columns([5, 1], vertical_alignment="center")
             with run_col:
                 if st.button("Run slop detection", width='stretch'):
                  
