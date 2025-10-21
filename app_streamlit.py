@@ -366,9 +366,9 @@ def main():
                     cfg,
                 )
 
-                st.success("Decision")
+                st.info("Slop Decision")
                 st.metric(
-                    "Slop",
+                    "Slop Survey Says",
                     str(report["decision_slop"]),
                     delta=f"{report['combined_score']:.3f}",
                 )
