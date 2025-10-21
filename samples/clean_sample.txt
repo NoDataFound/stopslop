@@ -1,0 +1,6 @@
+Incident summary with sources:
+- CISA advisory: https://www.cisa.gov/known-exploited-vulnerabilities-catalog
+- MITRE ATTACK: T1059 Command and Scripting Interpreter
+- CVE-2023-12345 was confirmed with vendor advisory
+SHA256: 7f83b1657ff1fc53b92dc18148a1d65dfa13514a2f6b9f9f1c6d1e6f5d1d1c28
+Operational change requests must be peer reviewed and canaried on ServiceNow change CHG12345.

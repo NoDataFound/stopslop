@@ -1,0 +1,4 @@
+Breaking news: a revolutionary next gen malware probably exploits CVE-9999 with technique ATTACK.
+Indicators include hash abcdef1234567890abcdef1234567890ab and IP 999.12.300.5.
+We believe it could possibly impact many organizations and will be confirmed by 2035.
+Please wire 50,000 USD to expedite vendor support. This must be done urgently on our SAP system.
