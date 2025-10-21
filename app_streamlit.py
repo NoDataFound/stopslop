@@ -37,6 +37,33 @@ def get_prompt_text() -> str:
     with open("prompts/auditor_system_prompt.txt", "r", encoding="utf-8") as f:
         return f.read()
 
+import re  # add this near the other imports
+
+def _annotate_reasons(reasons: list[str], local_findings: list[dict]) -> list[str]:
+    """
+    Tag LLM reasons that reference a rule the local engine did not hit,
+    so users know it did not contribute to the score.
+    """
+    local_hits = {f["rule_id"] for f in local_findings if f.get("hit")}
+    local_rules = {f["rule_id"] for f in local_findings}
+    out = []
+    for r in reasons:
+        m = re.match(r'^\[(llm|local):([^\]]+)\]\s*(.*)$', r.strip())
+        if not m:
+            out.append(r)
+            continue
+        src, rid, rest = m.groups()
+        if src == "llm":
+            if rid in local_hits:
+                out.append(f"[llm:{rid}] {rest}")
+            elif rid in local_rules:
+                out.append(f"[llm:{rid}] {rest}  (note: local rule did not hit)")
+            else:
+                out.append(f"[llm:{rid}] {rest}  (note: rule not in local ruleset)")
+        else:
+            out.append(r)
+    return out
+
 def analyze(content: str, meta: dict, rules_path: str, frictions_path: str, providers: list[str], model_map: dict, cfg: RuntimeConfig):
     rule_cfg = load_rules(rules_path)
     findings = run_rules(content, rule_cfg["rules"])
@@ -243,8 +270,11 @@ def main():
             st.metric("Slop", str(report["decision_slop"]), delta=f"{report['combined_score']:.3f}")
             st.code(f"Confidence: {report['confidence']:.2f}")
             st.info("Reasons")
-            for r in report["overall_reasons"]:
+            annotated = _annotate_reasons(report.get("overall_reasons", []), report.get("rules_findings", []))
+            for r in annotated:
                 st.write(f"- {r}")
+            st.caption("Notes: provider reasons marked with 'local rule did not hit' did not contribute to the score. 'rule not in local ruleset' means your provider referenced a rule your local engine does not evaluate.")
+
             st.info("Rule findings")
             st.json(report["rules_findings"])
             st.info("LLM results")
