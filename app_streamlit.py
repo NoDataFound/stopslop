@@ -195,14 +195,14 @@ def main():
         if top_rules.empty:
             st.write("No data yet")
         else:
-            st.dataframe(top_rules, use_container_width=True, hide_index=True)
+            st.dataframe(top_rules, width='stretch', hide_index=True)
     
     with st.sidebar.expander("Top friction points", expanded=False):
         top_fric = _top_counts(df_logs["frictions"] if total_runs else None, topn=10)
         if top_fric.empty:
             st.write("No data yet")
         else:
-            st.dataframe(top_fric, use_container_width=True, hide_index=True)
+            st.dataframe(top_fric, width='stretch', hide_index=True)
 
     # SIDEBAR: Log viewer
     st.sidebar.divider()
@@ -210,7 +210,7 @@ def main():
         if total_runs:
             show = df_logs.copy()
             show = show[["run_id","ts","source","combined_score","decision_slop","confidence","rules_hit","frictions"]]
-            st.dataframe(show, use_container_width=True, hide_index=True)
+            st.dataframe(show, width='stretch', hide_index=True)
         else:
             st.write("No runs yet")
 
@@ -218,7 +218,7 @@ def main():
     with st.expander("Visuals", expanded=False):
         if total_runs:
             fig1 = px.line(df_logs, x="ts", y="combined_score", markers=True, title="Combined score over time", color=df_logs["decision_slop"].map({True:"slop", False:"clean"}), color_discrete_sequence=px.colors.sequential.Plasma)
-            st.plotly_chart(fig1, use_container_width=True)
+            st.plotly_chart(fig1, width='stretch')
 
             rule_counts = df_logs["rules_hit"].explode().dropna().value_counts().reset_index()
             rule_counts.columns = ["rule_id","count"]
@@ -226,10 +226,10 @@ def main():
             if not rule_counts.empty:
                 fig2 = px.bar(rule_counts, x="rule_id", y="count", title="Top rule hits", color="count", color_continuous_scale="Plasma")
                 fig2.update_layout(xaxis_title="", yaxis_title="count")
-                st.plotly_chart(fig2, use_container_width=True)
+                st.plotly_chart(fig2, width='stretch')
 
             fig3 = px.histogram(df_logs, x="combined_score", nbins=20, title="Score distribution", color=df_logs["decision_slop"].map({True:"slop", False:"clean"}), color_discrete_sequence=px.colors.sequential.Magma)
-            st.plotly_chart(fig3, use_container_width=True)
+            st.plotly_chart(fig3, width='stretch')
         else:
             st.info("Run at least one analysis to populate charts")
 
