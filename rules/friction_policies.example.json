@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "frictions": [
     {
       "id": "exec-verbal-2fa",
@@ -23,7 +23,7 @@
       "severity": 0.7,
       "when": "slop_or_borderline",
       "triggers": {
-        "rule_ids_any": ["source-free", "llm-only-claims"]
+        "rule_ids_any": ["source-free", "vague-source", "unsupported-claim", "llm-only-claims"]
       },
       "steps": [
         "Obtain a vendor advisory or PSIRT note",
@@ -54,7 +54,7 @@
       "severity": 0.8,
       "when": "slop_or_borderline",
       "triggers": {
-        "rule_ids_any": ["cve-format", "mitre-format", "llm-only-claims"]
+        "rule_ids_any": ["cve-format", "mitre-format", "logic-break", "llm-only-claims"]
       },
       "steps": [
         "Use an isolated VM or container with no egress",
@@ -167,6 +167,97 @@
         "Capture patch or mitigation notes before action"
       ],
       "rationale": "Prevents chasing ghost CVEs"
+    },
+    {
+      "id": "peer-review-required",
+      "title": "Peer analytic review before dissemination",
+      "severity": 0.7,
+      "when": "slop_or_borderline",
+      "triggers": {
+        "rule_ids_any": ["unsupported-claim", "hyperbole", "tone-shift", "logic-break", "marketing-blend", "unclear-scope"]
+      },
+      "steps": [
+        "Route report to second analyst for validation of sources and tone",
+        "Require a citation list or justification memo before publishing",
+        "Attach reviewer name and timestamp"
+      ],
+      "rationale": "Prevents dissemination of analysis lacking evidentiary rigor or showing emotional bias"
+    },
+    {
+      "id": "source-validation",
+      "title": "Mandatory source validation",
+      "severity": 0.8,
+      "when": "slop_or_borderline",
+      "triggers": {
+        "rule_ids_any": ["source-free", "vague-source", "unsupported-claim"]
+      },
+      "steps": [
+        "Request at least two independent corroborating sources",
+        "Tag all URLs or document references with verification status",
+        "Recalculate confidence level after verification"
+      ],
+      "rationale": "Improves analytic credibility and traceability"
+    },
+    {
+      "id": "tone-moderation",
+      "title": "Tone moderation and neutralization pass",
+      "severity": 0.5,
+      "when": "slop_or_borderline",
+      "triggers": {
+        "rule_ids_any": ["hyperbole", "marketing-blend", "tone-shift"]
+      },
+      "steps": [
+        "Run text through linguistic moderation to remove emotional amplification",
+        "Replace adjectives with objective quantifiers",
+        "Add uncertainty statements where overconfidence is detected"
+      ],
+      "rationale": "Ensures analytic communications maintain professional tone and calibrated confidence"
+    },
+    {
+      "id": "logic-sanity-check",
+      "title": "Temporal and causal sanity check",
+      "severity": 0.6,
+      "when": "slop_or_borderline",
+      "triggers": {
+        "rule_ids_any": ["logic-break", "time-travel"]
+      },
+      "steps": [
+        "Review sequence of described events for causal consistency",
+        "Mark any future-dated confirmations for follow up when the date passes",
+        "Annotate findings with timeline corrections"
+      ],
+      "rationale": "Guards against reports that invert cause and effect or claim impossible timing"
+    },
+    {
+      "id": "attribution-discipline",
+      "title": "Attribution discipline gate",
+      "severity": 0.7,
+      "when": "slop_or_borderline",
+      "triggers": {
+        "rule_ids_any": ["mitre-format", "unsupported-claim", "unclear-scope"]
+      },
+      "steps": [
+        "Require explicit linkage between observed evidence and claimed technique or actor",
+        "List alternative hypotheses and why they were rejected",
+        "Record confidence level using a standard scale"
+      ],
+      "rationale": "Prevents speculative or decorative attribution without traceable evidence"
+    },
+    {
+      "id": "hedge-tightening",
+      "title": "Hedging specificity pass",
+      "severity": 0.45,
+      "when": "slop_or_borderline",
+      "triggers": {
+        "rule_ids_any": ["hedging-no-evidence", "unsupported-claim"]
+      },
+      "steps": [
+        "Replace generic hedges with measurable conditions or ranges",
+        "Add concrete indicators or observable outcomes to back each claim",
+        "Flag statements that cannot be supported and move them to hypothesis"
+      ],
+      "rationale": "Converts vague language into testable statements or marks them as hypothesis"
     }
   ]
 }
+
