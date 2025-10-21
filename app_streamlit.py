@@ -33,7 +33,7 @@ st.set_page_config(
 st.sidebar.image("assets/sts.png", width='stretch')
 st.sidebar.divider() 
 with st.sidebar.expander("haKCer Academy", expanded=True):
-    st.image("assets/hackeracademy.png", use_column_width=True)
+    st.image("assets/hackeracademy.png", use_container_width=True)
     st.markdown(
         """
         **What:** [haKCer Academy Article](https://www.linkedin.com/pulse/thank-you-subscribing-hakcer-academy-corian-cory-kennedy-sguwc/?trackingId=XS6mJXBLQ8KL8dhXtTd%2FPw%3D%3D)  
