@@ -168,7 +168,7 @@ def main():
             st.session_state.content = normalize_text(pasted, max_chars)
             st.session_state.meta = {"source": "pasted"}
 
-    # Metrics row
+    # Load logs data
     df_logs = _load_logs_df()
     total_runs = int(df_logs.shape[0])
     slop_runs = int(df_logs["decision_slop"].sum()) if total_runs else 0
@@ -176,31 +176,45 @@ def main():
     uniq_sources = int(df_logs["source"].nunique()) if total_runs else 0
     rule_hit_count = int(df_logs["rules_hit"].explode().dropna().shape[0]) if total_runs else 0
 
-    c1, c2, c3, c4, c5 = st.columns(5)
-    c1.sidebar.metric("Analyses", total_runs)
-    c2.sidebar.metric("Slop", slop_runs)
-    c3.sidebar.metric("Clean", not_slop)
-    c4.sidebar.metric("Sources", uniq_sources)
-    c5.sidebar.metric("Rule hits", rule_hit_count)
+    # SIDEBAR: Metrics row
+    st.sidebar.divider()
+    st.sidebar.subheader("Statistics")
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        st.metric("Analyses", total_runs)
+        st.metric("Slop", slop_runs)
+        st.metric("Clean", not_slop)
+    with col2:
+        st.metric("Sources", uniq_sources)
+        st.metric("Rule hits", rule_hit_count)
 
-    # Top lists
-    left, right = st.columns(2)
-    with left:
-        st.sidebar.success("Top slop observations")
+    # SIDEBAR: Top lists
+    st.sidebar.divider()
+    with st.sidebar.expander("Top slop observations", expanded=False):
         top_rules = _top_counts(df_logs["rules_hit"] if total_runs else None, topn=10)
         if top_rules.empty:
-            st.sidebar.write("No data yet")
+            st.write("No data yet")
         else:
-            st.sidebar.table(top_rules)
-    with right:
-        st.sidebar.success("Top friction points")
+            st.dataframe(top_rules, use_container_width=True, hide_index=True)
+    
+    with st.sidebar.expander("Top friction points", expanded=False):
         top_fric = _top_counts(df_logs["frictions"] if total_runs else None, topn=10)
         if top_fric.empty:
-            st.sidebar.write("No data yet")
+            st.write("No data yet")
         else:
-            st.sidebar.table(top_fric)
+            st.dataframe(top_fric, use_container_width=True, hide_index=True)
 
-    # Visuals
+    # SIDEBAR: Log viewer
+    st.sidebar.divider()
+    with st.sidebar.expander("Run log", expanded=False):
+        if total_runs:
+            show = df_logs.copy()
+            show = show[["run_id","ts","source","combined_score","decision_slop","confidence","rules_hit","frictions"]]
+            st.dataframe(show, use_container_width=True, hide_index=True)
+        else:
+            st.write("No runs yet")
+
+    # MAIN AREA: Visuals
     with st.expander("Visuals", expanded=False):
         if total_runs:
             fig1 = px.line(df_logs, x="ts", y="combined_score", markers=True, title="Combined score over time", color=df_logs["decision_slop"].map({True:"slop", False:"clean"}), color_discrete_sequence=px.colors.sequential.Plasma)
@@ -219,7 +233,7 @@ def main():
         else:
             st.info("Run at least one analysis to populate charts")
 
-    # Analysis runner - USE SESSION STATE
+    # MAIN AREA: Analysis runner
     if st.session_state.content:
         st.subheader("Preview")
         st.text_area("Normalized content sample", st.session_state.content[:2000], height=160, key="preview_area")
@@ -242,17 +256,8 @@ def main():
             st.download_button("Download JSON report", data=j, file_name="slopwatch_report.json", mime="application/json")
             md = to_markdown(report)
             st.download_button("Download Markdown report", data=md, file_name="slopwatch_report.md", mime="text/markdown")
-
-    # Log viewer
-    with st.sidebar.expander("Run log", expanded=False):
-        if total_runs:
-            show = df_logs.copy()
-            show = show[["run_id","ts","source","combined_score","decision_slop","confidence","rules_hit","frictions"]]
-            st.dataframe(show, width='stretch')
-        else:
-            st.write("No runs yet")
     
-    # Spot the Slop guide at the bottom
+    # MAIN AREA: Spot the Slop guide at the bottom
     components.html(SPOT_GUIDE_HTML, height=8000, scrolling=True)
 
 if __name__ == "__main__":
