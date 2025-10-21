@@ -45,7 +45,6 @@ with st.sidebar.expander("haKCer Academy", expanded=True):
         unsafe_allow_html=False,
     )
 
-st.sidebar.divider()
 @st.cache_data(show_spinner=False)
 def get_prompt_text() -> str:
     with open("prompts/auditor_system_prompt.txt", "r", encoding="utf-8") as f:
@@ -168,7 +167,6 @@ def main():
 
 
     # === Sidebar: Input expander ===
-    st.sidebar.divider()
     with st.sidebar.expander("Input & Fetch Content", expanded=True):
         st.subheader("Input")
         input_mode = st.radio("Source", ["URL", "File", "Paste text"], horizontal=True)
@@ -242,7 +240,6 @@ def main():
     st.sidebar.dataframe(styled, width='stretch', hide_index=True, height=160)
 
     # === Sidebar: Top lists ===
-    st.sidebar.divider()
         # === Sidebar: Config first so variables exist ===
     with st.sidebar.expander("SLOP STOP Config", expanded=False):
         rules_file = st.text_input("Rules file", value="rules/rules.example.json")
@@ -267,7 +264,6 @@ def main():
         }
 
 
-    st.sidebar.divider()
 
     # === MAIN AREA ===
     with st.sidebar.expander("Visuals", expanded=False):
@@ -294,7 +290,6 @@ def main():
             st.plotly_chart(fig3, use_container_width=True)
         else:
             st.info("Run at least one analysis to populate charts")
-    st.sidebar.divider()
 
     with st.sidebar.expander("Top slop observations", expanded=False):
         top_rules = _top_counts(df_logs["rules_hit"] if total_runs else None, topn=10)
