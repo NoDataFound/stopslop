@@ -177,28 +177,28 @@ def main():
     rule_hit_count = int(df_logs["rules_hit"].explode().dropna().shape[0]) if total_runs else 0
 
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Analyses", total_runs)
-    c2.metric("Slop", slop_runs)
-    c3.metric("Clean", not_slop)
-    c4.metric("Sources", uniq_sources)
-    c5.metric("Rule hits", rule_hit_count)
+    c1.sidebar.metric("Analyses", total_runs)
+    c2.sidebar.metric("Slop", slop_runs)
+    c3.sidebar.metric("Clean", not_slop)
+    c4.sidebar.metric("Sources", uniq_sources)
+    c5.sidebar.metric("Rule hits", rule_hit_count)
 
     # Top lists
     left, right = st.columns(2)
     with left:
-        st.success("Top slop observations")
+        st.sidebar.success("Top slop observations")
         top_rules = _top_counts(df_logs["rules_hit"] if total_runs else None, topn=10)
         if top_rules.empty:
-            st.write("No data yet")
+            st.sidebar.write("No data yet")
         else:
-            st.table(top_rules)
+            st.sidebar.table(top_rules)
     with right:
-        st.success("Top friction points")
+        st.sidebar.success("Top friction points")
         top_fric = _top_counts(df_logs["frictions"] if total_runs else None, topn=10)
         if top_fric.empty:
-            st.write("No data yet")
+            st.sidebar.write("No data yet")
         else:
-            st.table(top_fric)
+            st.sidebar.table(top_fric)
 
     # Visuals
     with st.expander("Visuals", expanded=False):
