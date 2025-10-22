@@ -1,6 +1,12 @@
 # STOP THE SLOP
 
-<img width="720" height="746" alt="sts" src="https://github.com/user-attachments/assets/4eed5b93-a666-45ff-ac6d-0595160529f8" />
+<p align="center">
+  <img width="320" height="346" alt="sts" src="https://github.com/user-attachments/assets/4eed5b93-a666-45ff-ac6d-0595160529f8" />
+</p>
+
+
+
+https://github.com/user-attachments/assets/631b30fa-40c0-4c69-89ac-6ef0135efe50
 
 
 ## Install
